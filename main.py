@@ -1,52 +1,46 @@
-import requests
-import telebot
-
-from parse_pack.dataPy import Data 
-from parse_pack.parse import Parse
-
 from settings.SETTINGS import *
 
-bot = telebot.TeleBot(TOKEN)
+from parse.Parse import Parse 
+from parse.dataPy import Data
 
-
-def create_keyboard():
-    keyboard = telebot.types.ReplyKeyboardMarkup(True, True)
-    return keyboard
-
-@bot.message_handler(commands=['start'])
+@BOT.message_handler(commands=['start'])
 def start_message(message):
-    bot.send_message(message.chat.id, 'Выбери валюту:', reply_markup=create_keyboard().row('Доллар', 'Евро', 'Рубли')) 
+    BOT.send_message(message.chat.id, 'Выберите интересующую вас валюту', reply_markup=KEYBOARD_START)
 
-@bot.message_handler(content_types=['text'])
+@BOT.message_handler(content_types=['text'])
 def get_text_messages(message):
 
     global site, values
+    
+    if message.text == BUTTON_USD:
+        site = Parse(URL_USD).get_content()
+        values = Data(site)
+        BOT.send_message(message.chat.id, 'Что вас интересует?', reply_markup=KEYBOARD_CHOICE)
+    
+    elif message.text == BUTTON_EUR:
+        site = Parse(URL_EUR).get_content()
+        values = Data(site)
+        BOT.send_message(message.chat.id, 'Что вас интересует?', reply_markup=KEYBOARD_CHOICE)
 
-    if message.text == 'Доллар':
-        site = Parse(URL_USD)
-        values = Data(site.get_content())
-        bot.send_message(message.chat.id, 'Выберите действие: ', reply_markup=create_keyboard().row('Лучший курс для покупки', 'Вывести полный список', 'Лучший курс для продажи', 'В начало'))
-    elif message.text == 'Евро':  
-        site = Parse(URL_EUR)
-        values = Data(site.get_content())
-        bot.send_message(message.chat.id, 'Выберите действие: ', reply_markup=create_keyboard().row('Лучший курс для покупки', 'Вывести полный список', 'Лучший курс для продажи', 'В начало'))
-    elif message.text == 'Рубли':  
-        site = Parse(URL_RUB)
-        values = Data(site.get_content())
-        bot.send_message(message.chat.id, 'Выберите действие: ', reply_markup=create_keyboard().row('Лучший курс для покупки', 'Вывести полный список', 'Лучший курс для продажи', 'В начало'))
-    elif message.text == 'Лучший курс для покупки':
-        bot.send_message(message.chat.id, values.get_best_buy(), reply_markup=create_keyboard().row('Лучший курс для покупки', 'Вывести полный список', 'Лучший курс для продажи', 'В начало'))
-    elif message.text == 'Лучший курс для продажи':
-        bot.send_message(message.chat.id, values.get_best_sell(), reply_markup=create_keyboard().row('Лучший курс для покупки', 'Вывести полный список', 'Лучший курс для продажи', 'В начало'))
-    elif message.text == 'Вывести полный список':
-        bot.send_message(message.chat.id, values.get_list(), reply_markup=create_keyboard().row('Лучший курс для покупки', 'Вывести полный список', 'Лучший курс для продажи', 'В начало'))
-    elif message.text == 'В начало':
+    elif message.text == BUTTON_RUB:
+        site = Parse(URL_RUB).get_content()
+        values = Data(site)
+        BOT.send_message(message.chat.id, 'Что вас интересует?', reply_markup=KEYBOARD_CHOICE)
+
+    elif message.text == BUTTON_GET_ALL_LIST:
+        BOT.send_message(message.chat.id, values.get_all_list(), reply_markup=KEYBOARD_CHOICE)
+
+    elif message.text == BUTTON_BEST_BUY_VALUE:
+        BOT.send_message(message.chat.id, values.get_best_buy_value(), reply_markup=KEYBOARD_CHOICE)
+
+    elif message.text == BUTTON_BEST_SELL_VALUE:
+        BOT.send_message(message.chat.id, values.get_best_sell_value(), reply_markup=KEYBOARD_CHOICE)
+    
+    elif message.text == BUTTON_START:
         start_message(message)
 
-    elif message.text == '/help':
-        bot.send_message(message.from_user.id, "Напишите /start")
-
     else:
-        bot.send_message(message.from_user.id, "Я тебя не понимаю. Напиши /help.")
+        BOT.send_message(message.chat.id, 'Я тебя не понимаю! Напиши, пожалуйста, /start')
 
-bot.polling(none_stop=True)
+BOT.polling()
+
